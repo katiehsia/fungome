@@ -6,7 +6,7 @@ library(ape)
 #import OTU table (from .csv file)
 Install.packages(“here”)
 Library(here)
-in_path <- here("phyloseq", "otu_table3.txt")
+in_path <- here("phyloseq", “out_table.txt")
 otu <- read.table(file = in_path, header = TRUE, check.names=FALSE)
 
 rownames(otu)<-otu$OTUID
@@ -18,25 +18,24 @@ taxonomy <- read.csv("taxonomy.csv", sep = ",", row.names = 1)
 taxonomy <- as.matrix(taxonomy)
 
 #import as csv – changed rownames to sample IDs 
-metadata4<-read.csv(file.choose(Fungal_metadata_endohisto2.tsv), header=TRUE)
-rownames(metadata4)<-metadata4$sample.id
-metadata4<-metadata4[-c(1)]
-META<-sample_data(metadata4)
+metadata_table<-read.csv(file.choose(“metadata.tsv”), header=TRUE)
+rownames(metadata_table)<-metadata_table$sample.id
+metadata_table<-metadata_table[-c(1)]
+META<-sample_data(metadata_table)
 phy_tree <- read_tree("tree.nwk")
 
-
-taxmat = matrix(nrow = nrow(taxonomy), ncol = 7)
-colnames(taxmat) <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+taxonomy_matrix = matrix(nrow = nrow(taxonomy), ncol = 7)
+colnames(taxonomy_matrix) <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
 library(stringr)
 split<-str_split_fixed(taxonomy$Taxon, ";", 7)
 rownames(split)<-rownames(taxonomy)
-colnames(split)<-colnames(taxmat)
+colnames(split)<-colnames(taxonomy_matrix)
 taxonomy2<-as.matrix(split)
 
 OTU <- otu_table(otu, taxa_are_rows = TRUE)
 TAX <- tax_table(taxonomy2)
-META <- sample_data(metadata4)
+META <- sample_data(metadata_table)
 
 # Sanity checks for consistent OTU names
 taxa_names(TAX)
