@@ -1,33 +1,18 @@
-#!/bin/sh
-#SBATCH -J Sush
-#SBATCH --time=00-20:00:00
-#SBATCH -p batch 
-#SBATCH -N 1
-#SBATCH -n 2
-#SBATCH -c 1 
-#SBATCH --mem=16g
-#SBATCH --output=MyJob.%j.%N.out
-#SBATCH --error=MyJob.%j.%N.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=sushrut.jangi@tufts.edu
-
 #variables
-module load qiime2/2021.11
-source activate qiime2-2021.11
-BASE_PWD=/cluster/tufts/jangilab/shared/its2
-MANIFEST=$BASE_PWD/manifest3.txt
-METADATA=$BASE_PWD/Fungal_Metadata_Final830.tsv
-OUTPUT=$BASE_PWD
-TRUNC_FORWARD=280
-TRUNC_REVERSE=261
-SAMPLE_DEPTH=416
-CORE=core-metric-results-5
+<load qiime2/2021.11>
+BASE_PWD=path/to/folder
+MANIFEST=path/to/manifest
+METADATA=path/to/metadata
+OUTPUT=path/to/output/folder
+TRUNC_FORWARD=<truncation of forward reads, we used 280>
+TRUNC_REVERSE= <truncation of reversereads, we used 261>
+SAMPLE_DEPTH=<depth to which to sample, 416>
 
 qiime tools import \--type 'SampleData[PairedEndSequencesWithQuality]' \--input-path $MANIFEST \--output-path $OUTPUT/paired-end-demux2.qza \--input-format PairedEndFastqManifestPhred33V2
 
 qiime demux summarize \--i-data $OUTPUT/paired-end-demux2.qza \--o-visualization $OUTPUT/paired-end-demux2.qzv
 
-qiime dada2 denoise-paired \--i-demultiplexed-seqs $OUTPUT/paired-end-demux2.qza \--p-trunc-len-f 280 \--p-trunc-len-r 261 \--o-representative-sequences $OUTPUT/rep-seqs-dada2.qza \--o-table $OUTPUT/table-dada2.qza \--o-denoising-stats $OUTPUT/stats-dada2.qza
+qiime dada2 denoise-paired \--i-demultiplexed-seqs $OUTPUT/paired-end-demux2.qza \--p-trunc-len-f $TRUNC_FORWARD \--p-trunc-len-r $TRUNC_REVERSE \--o-representative-sequences $OUTPUT/rep-seqs-dada2.qza \--o-table $OUTPUT/table-dada2.qza \--o-denoising-stats $OUTPUT/stats-dada2.qza
 
 qiime phylogeny align-to-tree-mafft-fasttree \
   --i-sequences rep-seqs-dada2.qza \
@@ -47,7 +32,7 @@ qiime feature-table filter-samples \
   --m-sample-metadata-file $METADATA \
   
   
-qiime diversity core-metrics-phylogenetic \--i-phylogeny $OUTPUT/rooted-tree.qza \--i-table $OUTPUT/filtered-table.qza \--p-sampling-depth $SAMPLE_DEPTH \--m-metadata-file $METADATA \--output-dir $BASE_PWD/$CORE \--verbose
+qiime diversity core-metrics-phylogenetic \--i-phylogeny $OUTPUT/rooted-tree.qza \--i-table $OUTPUT/filtered-table.qza \--p-sampling-depth $SAMPLE_DEPTH \--m-metadata-file $METADATA \--output-dir $BASE_PWD/core-metrics/ \--verbose
 
 
 # Fungal Classifier training 
@@ -85,7 +70,6 @@ qiime taxa barplot \
   --m-metadata-file $METADATA \
   --o-visualization $OUTPUT/taxa-bar-plots.qzv
 
-
 qiime tools export \
 --input-path $INPUT/filtered-table.qza \
 --output-path $OUTPUT/filtered-table
@@ -102,7 +86,3 @@ qiime tools export \
 qiime tools export \
 --input-path $INPUT/unrooted-tree.qza \
 --output-path $OUTPUT/unrooted-tree
-
-
-source deactivate
-echo End: $(date) >> $FOLDER/run.txtsource deactivate
